@@ -16,6 +16,49 @@ func NewTodoRepository() *TodoRepository {
 	return &TodoRepository{}
 }
 
+func (r *TodoRepository) Delete(id int) error {
+	result, err := database.DB.Exec("DELETE FROM todos WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("todo not found")
+	}
+	return nil
+}
+
+func (r *TodoRepository) Update(id int, todo *model.Todo) error {
+	result, err := database.DB.Exec("UPDATE todos SET title = ?, completed = ? WHERE id = ?", todo.Title, todo.Completed, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("todo not found")
+	}
+	return nil
+}
+
+func (r *TodoRepository) Create(todo *model.Todo) error {
+	result, err := database.DB.Exec("INSERT INTO todos (title, completed) VALUES (?, ?)", todo.Title, todo.Completed)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	todo.ID = int(id)
+	return nil
+}
+
 // GetByID 更具id获取
 func (r *TodoRepository) GetByID(id int) (*model.Todo, error) {
 	row := database.DB.QueryRow("SELECT id, title, completed, created_at, updated_at FROM todos WHERE id = ?", id)

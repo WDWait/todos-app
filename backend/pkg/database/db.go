@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // DB 全局变量
