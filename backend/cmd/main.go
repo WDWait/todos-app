@@ -22,7 +22,7 @@ func main() {
 	if database.DB == nil {
 		log.Fatal("Failed to initialize database connection")
 	}
-	defer database.DB.Close()
+	defer database.CloseDB()
 
 	// 设置 Gin 模式
 	gin.SetMode(gin.ReleaseMode)

@@ -1,11 +1,12 @@
 package repository
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"todos-app/internal/model"
 	"todos-app/pkg/database"
+
+	"gorm.io/gorm"
 )
 
 // TodoRepository 先定义一个Todos的结构体，后续可以给这个结构体添加方法。可以看作一个空接口
@@ -16,6 +17,79 @@ func NewTodoRepository() *TodoRepository {
 	return &TodoRepository{}
 }
 
+// Delete 删除待办事项
+func (r *TodoRepository) Delete(id int) error {
+	tx := database.DB.Delete(&model.Todo{}, id)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Update 更新待办事项
+func (r *TodoRepository) Update(id int, todo *model.Todo) error {
+	var existingTodo model.Todo
+	// 先检查记录是否存在
+	first := database.DB.First(&existingTodo, id)
+	if first.Error != nil {
+		return fmt.Errorf("todo not found")
+	} else if errors.Is(first.Error, gorm.ErrRecordNotFound) {
+		return first.Error
+	}
+
+	// 使用 Model + Updates 进行更新
+	// 注意：这里传入的是指针，GORM 会根据非零值字段进行更新
+	database.DB.Model(&existingTodo).Updates(model.Todo{
+		Title:     todo.Title,
+		Completed: todo.Completed,
+	})
+	// 确保 updated_at 字段被正确更新
+	// GORM 通常会自动处理 updated_at，但如果需要强制更新，可以这样：
+	// result = database.DB.Model(&existingTodo).Updates(map[string]interface{}{"title": todo.Title, "completed": todo.Completed})
+	// 或者，先查询再赋值再 Save
+	return nil
+}
+
+// Create 创建新的待办事项
+func (r *TodoRepository) Create(todo *model.Todo) error {
+	create := database.DB.Create(todo)
+	if create.Error != nil {
+		return create.Error
+	}
+	// GORM 通常会在 Create 后自动将生成的 ID 赋值给 todo.ID
+	return nil
+}
+
+// GetByID 根据 ID 获取单个待办事项
+func (r *TodoRepository) GetByID(id int) (*model.Todo, error) {
+	var todo model.Todo
+	// 使用 GORM 的 First 方法，它会返回第一条记录
+	result := database.DB.First(&todo, id)
+	if result.Error != nil {
+		return nil, result.Error
+	} else if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("todo not found")
+	}
+
+	return &todo, nil
+}
+
+// GetAll 获取所有待办事项，按创建时间倒序排列
+func (r *TodoRepository) GetAll() ([]model.Todo, error) {
+	var todos []model.Todo
+	// 使用 GORM 的 Order 和 Find 方法
+	result := database.DB.Order("created_at DESC").Find(&todos)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return todos, nil
+}
+
+/*
 func (r *TodoRepository) Delete(id int) error {
 	result, err := database.DB.Exec("DELETE FROM todos WHERE id = ?", id)
 	if err != nil {
@@ -99,6 +173,8 @@ func (r *TodoRepository) GetAll() ([]model.Todo, error) {
 	}
 	return todos, nil
 }
+
+*/
 
 /*
 	是否在疑惑什么时候返回值用*，什么时候不用呢？

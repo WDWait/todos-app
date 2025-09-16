@@ -28,7 +28,7 @@ func NewTodoHandler() *TodoHandler {
 // @Success 204 "No Content"
 // @Router /api/todos/{id} [delete]
 func (h *TodoHandler) DeleteTodo(c *gin.Context) {
-	id, err := strconv.Atoi(c.PostForm("id"))
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid id"})
 		return
@@ -51,7 +51,7 @@ func (h *TodoHandler) DeleteTodo(c *gin.Context) {
 // @Success 200 {object} model.Todo
 // @Router /api/todos/{id} [put]
 func (h *TodoHandler) UpdateTodo(c *gin.Context) {
-	id, err := strconv.Atoi(c.PostForm("id"))
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid id"})
 		return
