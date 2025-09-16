@@ -15,11 +15,11 @@ var DB *sql.DB
 func InitDB() {
 	var err error
 	dsn := os.Getenv("DB_DSN")
-	open, err := sql.Open("mysql", dsn)
+	DB, err = sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
-	if err = open.Ping(); err != nil {
+	if err = DB.Ping(); err != nil {
 		log.Fatal("Error connecting to database: ", err)
 	}
 	log.Println("Connected to MySQL database")

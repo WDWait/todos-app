@@ -16,8 +16,12 @@ func main() {
 		log.Println("Warning: .env file not found")
 	}
 
+	// InitDB
 	// 初始化数据库
 	database.InitDB()
+	if database.DB == nil {
+		log.Fatal("Failed to initialize database connection")
+	}
 	defer database.DB.Close()
 
 	// 设置 Gin 模式
@@ -26,6 +30,15 @@ func main() {
 		gin.SetMode(gin.DebugMode)
 	}
 	r := gin.Default()
+
+	// 提供静态资源
+	r.Static("/static", "../frontend/todo-react/dist")
+	r.StaticFile("/", "../frontend/todo-react/dist/index.html")
+
+	// SPA 兜底路由
+	r.NoRoute(func(c *gin.Context) {
+		c.File("../frontend/todo-react/dist/index.html")
+	})
 
 	// 健康检查路由
 	r.GET("/health", func(c *gin.Context) {
